@@ -111,7 +111,7 @@ export function TaskCard({ instance }: Props) {
                 <button
                   onClick={() => setStatusMenuOpen(v => !v)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors cursor-pointer hover:opacity-80',
+                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-colors cursor-pointer hover:opacity-80',
                     style.badge
                   )}
                 >

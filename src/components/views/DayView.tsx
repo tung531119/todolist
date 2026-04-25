@@ -60,7 +60,7 @@ export function DayView() {
     <div className="flex gap-5 items-start">
 
       {/* ── Left panel: date info + filters ─────────────────────────────── */}
-      <div className="w-72 shrink-0 flex flex-col gap-4 sticky top-0">
+      <div className="w-80 shrink-0 flex flex-col gap-4 sticky top-0">
 
         {/* Date card */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
@@ -188,9 +188,9 @@ export function DayView() {
 function TaskGroup({ label, tasks, accent }: { label: string; tasks: TaskInstance[]; accent: string }) {
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`text-xs font-semibold uppercase tracking-wide text-${accent}-600`}>{label}</span>
-        <span className={`text-xs text-${accent}-400`}>{tasks.length}</span>
+      <div className="flex items-center gap-2 mb-2.5">
+        <span className={`text-sm font-bold uppercase tracking-wide text-${accent}-600`}>{label}</span>
+        <span className={`text-sm font-semibold text-${accent}-400`}>{tasks.length}</span>
       </div>
       <div className="flex flex-col gap-2">
         {tasks.map(t => <TaskCard key={t.id} instance={t} />)}

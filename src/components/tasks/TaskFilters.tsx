@@ -22,7 +22,6 @@ export function TaskFilters() {
         : [...ui.categoryFilter, id],
     })
   }
-
   function toggleStatus(s: Status) {
     setUI({
       statusFilter: ui.statusFilter.includes(s)
@@ -30,7 +29,6 @@ export function TaskFilters() {
         : [...ui.statusFilter, s],
     })
   }
-
   function togglePriority(p: Priority) {
     setUI({
       priorityFilter: ui.priorityFilter.includes(p)
@@ -38,28 +36,27 @@ export function TaskFilters() {
         : [...ui.priorityFilter, p],
     })
   }
-
   function clearAll() {
     setUI({ categoryFilter: [], statusFilter: [], priorityFilter: [] })
   }
 
   const statusColor: Record<Status, string> = {
-    pending: 'bg-amber-100 text-amber-700 border-amber-300',
+    pending:       'bg-amber-100 text-amber-700 border-amber-300',
     'in-progress': 'bg-blue-100 text-blue-700 border-blue-300',
-    completed: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+    completed:     'bg-emerald-100 text-emerald-700 border-emerald-300',
   }
-
   const priorityColor: Record<Priority, string> = {
-    high: 'bg-red-100 text-red-700 border-red-300',
+    high:   'bg-red-100 text-red-700 border-red-300',
     medium: 'bg-orange-100 text-orange-700 border-orange-300',
-    low: 'bg-slate-100 text-slate-600 border-slate-300',
+    low:    'bg-slate-100 text-slate-600 border-slate-300',
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-          <Filter size={14} />
+    <div className="bg-white border border-slate-200 rounded-xl p-5">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
+          <Filter size={15} />
           {t('filters')}
         </div>
         {hasFilters && (
@@ -71,17 +68,17 @@ export function TaskFilters() {
       </div>
 
       {/* Status */}
-      <div className="mb-3">
-        <p className="text-xs text-slate-400 mb-1.5 uppercase tracking-wide">{t('status')}</p>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="mb-4">
+        <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">{t('status')}</p>
+        <div className="flex flex-wrap gap-2">
           {STATUSES.map(s => (
             <button
               key={s}
               onClick={() => toggleStatus(s)}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs border font-medium transition-all',
+                'px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all',
                 ui.statusFilter.includes(s)
-                  ? statusColor[s] + ' ring-1 ring-offset-0'
+                  ? statusColor[s] + ' ring-1'
                   : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
               )}
             >
@@ -92,15 +89,15 @@ export function TaskFilters() {
       </div>
 
       {/* Priority */}
-      <div className="mb-3">
-        <p className="text-xs text-slate-400 mb-1.5 uppercase tracking-wide">{t('priority')}</p>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="mb-4">
+        <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">{t('priority')}</p>
+        <div className="flex flex-wrap gap-2">
           {PRIORITIES.map(p => (
             <button
               key={p}
               onClick={() => togglePriority(p)}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs border font-medium transition-all',
+                'px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all',
                 ui.priorityFilter.includes(p)
                   ? priorityColor[p] + ' ring-1'
                   : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
@@ -114,14 +111,14 @@ export function TaskFilters() {
 
       {/* Category */}
       <div>
-        <p className="text-xs text-slate-400 mb-1.5 uppercase tracking-wide">{t('category')}</p>
-        <div className="flex flex-wrap gap-1.5">
+        <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">{t('category')}</p>
+        <div className="flex flex-wrap gap-2">
           {categories.map(c => (
             <button
               key={c.id}
               onClick={() => toggleCategory(c.id)}
               className={cn(
-                'px-2.5 py-1 rounded-lg text-xs border font-medium transition-all',
+                'px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all',
                 ui.categoryFilter.includes(c.id)
                   ? `bg-${c.color}-100 text-${c.color}-700 border-${c.color}-300 ring-1`
                   : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'

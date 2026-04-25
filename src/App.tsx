@@ -43,7 +43,7 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header activePage={activePage} />
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto px-10 py-7">
           <div className={
             (activePage === 'templates' || activePage === 'settings' || viewMode === 'week' || viewMode === 'month')
               ? 'max-w-2xl mx-auto animate-fade-in'
