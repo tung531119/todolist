@@ -92,11 +92,11 @@ export function DayView() {
                 </span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <Stat icon={<ClipboardList size={13} />} value={total}     label={t('total')}     color="text-slate-500" />
-                <Stat icon={<Circle size={13} />}        value={instances.filter(i => i.date === selectedDate && i.status === 'pending').length} label={t('pending')} color="text-amber-500" />
-                <Stat icon={<CheckCircle2 size={13} />}  value={completed} label={t('completed')} color="text-emerald-500" />
+                <Stat icon={<ClipboardList size={14} />} value={total}     label={t('total')}     color="text-slate-500" />
+                <Stat icon={<Circle size={14} />}        value={instances.filter(i => i.date === selectedDate && i.status === 'pending').length} label={t('pending')} color="text-amber-500" />
+                <Stat icon={<CheckCircle2 size={14} />}  value={completed} label={t('completed')} color="text-emerald-500" />
                 {overdueInstances.length > 0 && (
-                  <Stat icon={<AlertCircle size={13} />} value={overdueInstances.length} label={t('notFinished')} color="text-rose-500" />
+                  <Stat icon={<AlertCircle size={14} />} value={overdueInstances.length} label={t('notFinished')} color="text-rose-500" />
                 )}
               </div>
             </div>
@@ -203,8 +203,8 @@ function Stat({ icon, value, label, color }: { icon: React.ReactNode; value: num
   return (
     <div className={`flex items-center gap-1.5 ${color}`}>
       {icon}
-      <span className="text-xs font-semibold text-slate-700">{value}</span>
-      <span className="text-xs text-slate-400">{label}</span>
+      <span className="text-sm font-bold text-slate-700">{value}</span>
+      <span className="text-sm text-slate-400">{label}</span>
     </div>
   )
 }

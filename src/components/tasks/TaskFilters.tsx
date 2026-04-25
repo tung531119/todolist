@@ -76,7 +76,7 @@ export function TaskFilters() {
               key={s}
               onClick={() => toggleStatus(s)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all',
+                'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all',
                 ui.statusFilter.includes(s)
                   ? statusColor[s] + ' ring-1'
                   : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
@@ -97,7 +97,7 @@ export function TaskFilters() {
               key={p}
               onClick={() => togglePriority(p)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all',
+                'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all',
                 ui.priorityFilter.includes(p)
                   ? priorityColor[p] + ' ring-1'
                   : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
@@ -118,7 +118,7 @@ export function TaskFilters() {
               key={c.id}
               onClick={() => toggleCategory(c.id)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all',
+                'px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all',
                 ui.categoryFilter.includes(c.id)
                   ? `bg-${c.color}-100 text-${c.color}-700 border-${c.color}-300 ring-1`
                   : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'

@@ -100,7 +100,7 @@ export function TaskCard({ instance }: Props) {
             </div>
 
             {instance.description && (
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">{instance.description}</p>
+              <p className="text-sm text-slate-500 mt-1 leading-relaxed">{instance.description}</p>
             )}
 
             {/* Badges row */}
