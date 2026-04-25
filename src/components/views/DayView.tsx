@@ -1,0 +1,201 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Plus, CheckCircle2, Circle, ClipboardList } from 'lucide-react'
+import { useStore } from '../../store'
+import { useLang } from '../../hooks/useLang'
+import { formatDisplay, isToday, fromDateString } from '../../utils/date'
+import { TaskCard } from '../tasks/TaskCard'
+import { TaskFilters } from '../tasks/TaskFilters'
+import { Modal } from '../common/Modal'
+import { TaskForm } from '../tasks/TaskForm'
+import { StorageBanner } from '../common/StorageBanner'
+import type { TaskInstance } from '../../types'
+import { cn } from '../../utils/cn'
+
+export function DayView() {
+  const { t, lang } = useLang()
+  const selectedDate = useStore(s => s.ui.selectedDate)
+  const instances = useStore(s => s.instances)
+  const ui = useStore(s => s.ui)
+  const addInstance = useStore(s => s.addInstance)
+  const ensureInstances = useStore(s => s.ensureInstances)
+
+  const [addOpen, setAddOpen] = useState(false)
+
+  useEffect(() => {
+    ensureInstances([selectedDate])
+  }, [selectedDate])
+
+  const dayInstances = useMemo(() => {
+    let list = instances.filter(i => i.date === selectedDate)
+
+    if (ui.categoryFilter.length > 0)
+      list = list.filter(i => ui.categoryFilter.includes(i.categoryId))
+    if (ui.statusFilter.length > 0)
+      list = list.filter(i => ui.statusFilter.includes(i.status))
+    if (ui.priorityFilter.length > 0)
+      list = list.filter(i => ui.priorityFilter.includes(i.priority))
+
+    // Sort: pending → in-progress → completed, then by priority
+    const statusOrder = { pending: 0, 'in-progress': 1, completed: 2 }
+    const priorityOrder = { high: 0, medium: 1, low: 2 }
+    return list.sort((a, b) => {
+      const sd = statusOrder[a.status] - statusOrder[b.status]
+      if (sd !== 0) return sd
+      return priorityOrder[a.priority] - priorityOrder[b.priority]
+    })
+  }, [instances, selectedDate, ui.categoryFilter, ui.statusFilter, ui.priorityFilter])
+
+  const total = instances.filter(i => i.date === selectedDate).length
+  const completed = instances.filter(i => i.date === selectedDate && i.status === 'completed').length
+  const progress = total === 0 ? 0 : Math.round((completed / total) * 100)
+
+  const todayDate = isToday(fromDateString(selectedDate))
+  const dateLabel = formatDisplay(selectedDate, lang === 'zh' ? 'yyyy年M月d日' : 'EEEE, MMMM d')
+
+  const grouped = groupByStatus(dayInstances)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <StorageBanner />
+
+      {/* Date header */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className={cn('text-xs font-semibold uppercase tracking-widest mb-1',
+              todayDate ? 'text-indigo-500' : 'text-slate-400')}>
+              {todayDate ? t('today') : formatDisplay(selectedDate, 'EEE')}
+            </p>
+            <h1 className="text-xl font-bold text-slate-900">{dateLabel}</h1>
+          </div>
+
+          {/* Progress ring */}
+          {total > 0 && (
+            <div className="flex flex-col items-center">
+              <div className="relative w-14 h-14">
+                <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                  <circle cx="28" cy="28" r="22" fill="none" stroke="#e2e8f0" strokeWidth="4" />
+                  <circle
+                    cx="28" cy="28" r="22"
+                    fill="none"
+                    stroke={progress === 100 ? '#10b981' : '#6366f1'}
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 22}`}
+                    strokeDashoffset={`${2 * Math.PI * 22 * (1 - progress / 100)}`}
+                    className="transition-all duration-500"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700">
+                  {progress}%
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">{completed}/{total}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Stats row */}
+        {total > 0 && (
+          <div className="flex gap-4 mt-4 pt-4 border-t border-slate-100">
+            <Stat icon={<ClipboardList size={14} />} value={total} label={t('total')} color="text-slate-600" />
+            <Stat icon={<Circle size={14} />} value={instances.filter(i => i.date === selectedDate && i.status === 'pending').length} label={t('pending')} color="text-amber-500" />
+            <Stat icon={<CheckCircle2 size={14} />} value={completed} label={t('completed')} color="text-emerald-500" />
+          </div>
+        )}
+      </div>
+
+      {/* Filters */}
+      <TaskFilters />
+
+      {/* Task groups */}
+      {dayInstances.length === 0 ? (
+        <EmptyState
+          hasFilters={ui.categoryFilter.length > 0 || ui.statusFilter.length > 0 || ui.priorityFilter.length > 0}
+          onAdd={() => setAddOpen(true)}
+          t={t}
+        />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {grouped.pending.length > 0 && (
+            <TaskGroup label={t('pending')} tasks={grouped.pending} accent="amber" />
+          )}
+          {grouped['in-progress'].length > 0 && (
+            <TaskGroup label={t('in-progress')} tasks={grouped['in-progress']} accent="blue" />
+          )}
+          {grouped.completed.length > 0 && (
+            <TaskGroup label={t('completed')} tasks={grouped.completed} accent="emerald" />
+          )}
+        </div>
+      )}
+
+      {/* FAB */}
+      <button
+        onClick={() => setAddOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        title={t('addTask')}
+      >
+        <Plus size={22} />
+      </button>
+
+      {/* Add modal */}
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title={t('addTask')}>
+        <TaskForm
+          defaultDate={selectedDate}
+          onSave={data => { addInstance(data); setAddOpen(false) }}
+          onCancel={() => setAddOpen(false)}
+        />
+      </Modal>
+    </div>
+  )
+}
+
+function TaskGroup({ label, tasks, accent }: { label: string; tasks: TaskInstance[]; accent: string }) {
+  return (
+    <div>
+      <div className={`flex items-center gap-2 mb-2`}>
+        <span className={`text-xs font-semibold uppercase tracking-wide text-${accent}-600`}>{label}</span>
+        <span className={`text-xs text-${accent}-400`}>{tasks.length}</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {tasks.map(t => <TaskCard key={t.id} instance={t} />)}
+      </div>
+    </div>
+  )
+}
+
+function Stat({ icon, value, label, color }: { icon: React.ReactNode; value: number; label: string; color: string }) {
+  return (
+    <div className={`flex items-center gap-1.5 ${color}`}>
+      {icon}
+      <span className="text-sm font-semibold">{value}</span>
+      <span className="text-xs text-slate-400">{label}</span>
+    </div>
+  )
+}
+
+function EmptyState({ hasFilters, onAdd, t }: { hasFilters: boolean; onAdd: () => void; t: (k: any) => string }) {
+  return (
+    <div className="bg-white rounded-xl border border-dashed border-slate-200 p-10 text-center">
+      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+        <ClipboardList size={20} className="text-slate-400" />
+      </div>
+      <p className="text-sm font-medium text-slate-500 mb-1">
+        {hasFilters ? t('noTasksFilter') : t('noTasksDay')}
+      </p>
+      {!hasFilters && (
+        <button onClick={onAdd} className="mt-3 text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+          {t('addFirstTask')} →
+        </button>
+      )}
+    </div>
+  )
+}
+
+function groupByStatus(tasks: TaskInstance[]) {
+  return {
+    pending: tasks.filter(t => t.status === 'pending'),
+    'in-progress': tasks.filter(t => t.status === 'in-progress'),
+    completed: tasks.filter(t => t.status === 'completed'),
+  }
+}
