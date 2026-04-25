@@ -26,61 +26,54 @@ export function DayView() {
     ensureInstances([selectedDate])
   }, [selectedDate])
 
-  // Tasks incomplete from previous days (only on today's view)
   const overdueInstances = useMemo(() => {
-    if (selectedDate >= new Date().toISOString().slice(0, 10) === false) return []
-    return instances.filter(
-      i => i.date < selectedDate && (i.status === 'pending' || i.status === 'in-progress')
-    ).sort((a, b) => b.date.localeCompare(a.date)) // newest-old first
+    const today = new Date().toISOString().slice(0, 10)
+    if (selectedDate !== today) return []
+    return instances
+      .filter(i => i.date < selectedDate && (i.status === 'pending' || i.status === 'in-progress'))
+      .sort((a, b) => b.date.localeCompare(a.date))
   }, [instances, selectedDate])
 
   const dayInstances = useMemo(() => {
     let list = instances.filter(i => i.date === selectedDate)
+    if (ui.categoryFilter.length > 0) list = list.filter(i => ui.categoryFilter.includes(i.categoryId))
+    if (ui.statusFilter.length > 0)   list = list.filter(i => ui.statusFilter.includes(i.status))
+    if (ui.priorityFilter.length > 0) list = list.filter(i => ui.priorityFilter.includes(i.priority))
 
-    if (ui.categoryFilter.length > 0)
-      list = list.filter(i => ui.categoryFilter.includes(i.categoryId))
-    if (ui.statusFilter.length > 0)
-      list = list.filter(i => ui.statusFilter.includes(i.status))
-    if (ui.priorityFilter.length > 0)
-      list = list.filter(i => ui.priorityFilter.includes(i.priority))
-
-    const statusOrder = { pending: 0, 'in-progress': 1, completed: 2 }
+    const statusOrder   = { pending: 0, 'in-progress': 1, completed: 2 }
     const priorityOrder = { high: 0, medium: 1, low: 2 }
     return list.sort((a, b) => {
       const sd = statusOrder[a.status] - statusOrder[b.status]
-      if (sd !== 0) return sd
-      return priorityOrder[a.priority] - priorityOrder[b.priority]
+      return sd !== 0 ? sd : priorityOrder[a.priority] - priorityOrder[b.priority]
     })
   }, [instances, selectedDate, ui.categoryFilter, ui.statusFilter, ui.priorityFilter])
 
-  const total = instances.filter(i => i.date === selectedDate).length
+  const total     = instances.filter(i => i.date === selectedDate).length
   const completed = instances.filter(i => i.date === selectedDate && i.status === 'completed').length
-  const progress = total === 0 ? 0 : Math.round((completed / total) * 100)
+  const progress  = total === 0 ? 0 : Math.round((completed / total) * 100)
 
   const todayDate = isToday(fromDateString(selectedDate))
   const dateLabel = formatDisplay(selectedDate, lang === 'zh' ? 'yyyy年M月d日' : 'EEEE, MMMM d')
-
-  const grouped = groupByStatus(dayInstances)
+  const grouped   = groupByStatus(dayInstances)
 
   return (
-    <div className="flex flex-col gap-4">
-      <StorageBanner />
+    <div className="flex gap-5 items-start">
 
-      {/* Date header */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className={cn('text-xs font-semibold uppercase tracking-widest mb-1',
-              todayDate ? 'text-indigo-500' : 'text-slate-400')}>
-              {todayDate ? t('today') : formatDisplay(selectedDate, 'EEE')}
-            </p>
-            <h1 className="text-xl font-bold text-slate-900">{dateLabel}</h1>
-          </div>
+      {/* ── Left panel: date info + filters ─────────────────────────────── */}
+      <div className="w-72 shrink-0 flex flex-col gap-4 sticky top-0">
+
+        {/* Date card */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <p className={cn('text-xs font-semibold uppercase tracking-widest mb-1',
+            todayDate ? 'text-indigo-500' : 'text-slate-400')}>
+            {todayDate ? t('today') : formatDisplay(selectedDate, 'EEE')}
+          </p>
+          <h1 className="text-lg font-bold text-slate-900 leading-tight">{dateLabel}</h1>
 
           {/* Progress ring */}
           {total > 0 && (
-            <div className="flex flex-col items-center">
-              <div className="relative w-14 h-14">
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
+              <div className="relative w-14 h-14 shrink-0">
                 <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
                   <circle cx="28" cy="28" r="22" fill="none" stroke="#e2e8f0" strokeWidth="4" />
                   <circle
@@ -98,86 +91,79 @@ export function DayView() {
                   {progress}%
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">{completed}/{total}</p>
+              <div className="flex flex-col gap-1.5">
+                <Stat icon={<ClipboardList size={13} />} value={total}     label={t('total')}     color="text-slate-500" />
+                <Stat icon={<Circle size={13} />}        value={instances.filter(i => i.date === selectedDate && i.status === 'pending').length} label={t('pending')} color="text-amber-500" />
+                <Stat icon={<CheckCircle2 size={13} />}  value={completed} label={t('completed')} color="text-emerald-500" />
+                {overdueInstances.length > 0 && (
+                  <Stat icon={<AlertCircle size={13} />} value={overdueInstances.length} label={t('notFinished')} color="text-rose-500" />
+                )}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Stats row */}
-        {total > 0 && (
-          <div className="flex gap-4 mt-4 pt-4 border-t border-slate-100">
-            <Stat icon={<ClipboardList size={14} />} value={total} label={t('total')} color="text-slate-600" />
-            <Stat icon={<Circle size={14} />} value={instances.filter(i => i.date === selectedDate && i.status === 'pending').length} label={t('pending')} color="text-amber-500" />
-            <Stat icon={<CheckCircle2 size={14} />} value={completed} label={t('completed')} color="text-emerald-500" />
-            {overdueInstances.length > 0 && todayDate && (
-              <Stat icon={<AlertCircle size={14} />} value={overdueInstances.length} label={t('notFinished')} color="text-rose-500" />
+        {/* Filters */}
+        <TaskFilters />
+      </div>
+
+      {/* ── Right panel: tasks ───────────────────────────────────────────── */}
+      <div className="flex-1 min-w-0 flex flex-col gap-4">
+        <StorageBanner />
+
+        {/* Not Finished */}
+        {todayDate && overdueInstances.length > 0 && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 overflow-hidden">
+            <button
+              onClick={() => setNotFinishedOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-rose-100/50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle size={15} className="text-rose-500" />
+                <span className="text-sm font-semibold text-rose-700">{t('notFinished')}</span>
+                <span className="bg-rose-200 text-rose-700 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {overdueInstances.length}
+                </span>
+              </div>
+              <ChevronDown size={15} className={cn('text-rose-400 transition-transform', notFinishedOpen && 'rotate-180')} />
+            </button>
+            {notFinishedOpen && (
+              <div className="px-4 pb-4 flex flex-col gap-2 animate-slide-in">
+                <p className="text-xs text-rose-400 mb-1">{t('notFinishedDesc')}</p>
+                {overdueInstances.map(instance => (
+                  <div key={instance.id} className="relative">
+                    <span className="absolute -top-1.5 right-2 z-10 text-[10px] bg-rose-100 text-rose-400 px-1.5 py-0.5 rounded-full border border-rose-200">
+                      {formatDisplay(instance.date, lang === 'zh' ? 'M/d' : 'MMM d')}
+                    </span>
+                    <TaskCard instance={instance} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Today's tasks */}
+        {dayInstances.length === 0 ? (
+          <EmptyState
+            hasFilters={ui.categoryFilter.length > 0 || ui.statusFilter.length > 0 || ui.priorityFilter.length > 0}
+            onAdd={() => setAddOpen(true)}
+            t={t}
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {grouped.pending.length > 0 && (
+              <TaskGroup label={t('pending')} tasks={grouped.pending} accent="amber" />
+            )}
+            {grouped['in-progress'].length > 0 && (
+              <TaskGroup label={t('in-progress')} tasks={grouped['in-progress']} accent="blue" />
+            )}
+            {grouped.completed.length > 0 && (
+              <TaskGroup label={t('completed')} tasks={grouped.completed} accent="emerald" />
             )}
           </div>
         )}
       </div>
-
-      {/* ── Not Finished section (only on today's view) ── */}
-      {todayDate && overdueInstances.length > 0 && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 overflow-hidden">
-          {/* Header */}
-          <button
-            onClick={() => setNotFinishedOpen(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 hover:bg-rose-100/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <AlertCircle size={15} className="text-rose-500" />
-              <span className="text-sm font-semibold text-rose-700">{t('notFinished')}</span>
-              <span className="bg-rose-200 text-rose-700 text-xs font-bold px-1.5 py-0.5 rounded-full">
-                {overdueInstances.length}
-              </span>
-            </div>
-            <ChevronDown
-              size={15}
-              className={cn('text-rose-400 transition-transform', notFinishedOpen && 'rotate-180')}
-            />
-          </button>
-
-          {/* Task list */}
-          {notFinishedOpen && (
-            <div className="px-4 pb-4 flex flex-col gap-2 animate-slide-in">
-              <p className="text-xs text-rose-400 mb-1">{t('notFinishedDesc')}</p>
-              {overdueInstances.map(instance => (
-                <div key={instance.id} className="relative">
-                  {/* Date label */}
-                  <span className="absolute -top-1.5 right-2 z-10 text-[10px] bg-rose-100 text-rose-400 px-1.5 py-0.5 rounded-full border border-rose-200">
-                    {formatDisplay(instance.date, lang === 'zh' ? 'M/d' : 'MMM d')}
-                  </span>
-                  <TaskCard instance={instance} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Filters */}
-      <TaskFilters />
-
-      {/* Task groups */}
-      {dayInstances.length === 0 ? (
-        <EmptyState
-          hasFilters={ui.categoryFilter.length > 0 || ui.statusFilter.length > 0 || ui.priorityFilter.length > 0}
-          onAdd={() => setAddOpen(true)}
-          t={t}
-        />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {grouped.pending.length > 0 && (
-            <TaskGroup label={t('pending')} tasks={grouped.pending} accent="amber" />
-          )}
-          {grouped['in-progress'].length > 0 && (
-            <TaskGroup label={t('in-progress')} tasks={grouped['in-progress']} accent="blue" />
-          )}
-          {grouped.completed.length > 0 && (
-            <TaskGroup label={t('completed')} tasks={grouped.completed} accent="emerald" />
-          )}
-        </div>
-      )}
 
       {/* FAB */}
       <button
@@ -188,7 +174,6 @@ export function DayView() {
         <Plus size={22} />
       </button>
 
-      {/* Add modal */}
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title={t('addTask')}>
         <TaskForm
           defaultDate={selectedDate}
@@ -218,7 +203,7 @@ function Stat({ icon, value, label, color }: { icon: React.ReactNode; value: num
   return (
     <div className={`flex items-center gap-1.5 ${color}`}>
       {icon}
-      <span className="text-sm font-semibold">{value}</span>
+      <span className="text-xs font-semibold text-slate-700">{value}</span>
       <span className="text-xs text-slate-400">{label}</span>
     </div>
   )
@@ -244,8 +229,8 @@ function EmptyState({ hasFilters, onAdd, t }: { hasFilters: boolean; onAdd: () =
 
 function groupByStatus(tasks: TaskInstance[]) {
   return {
-    pending: tasks.filter(t => t.status === 'pending'),
+    pending:       tasks.filter(t => t.status === 'pending'),
     'in-progress': tasks.filter(t => t.status === 'in-progress'),
-    completed: tasks.filter(t => t.status === 'completed'),
+    completed:     tasks.filter(t => t.status === 'completed'),
   }
 }
