@@ -3,14 +3,27 @@ import { Check, Circle, Clock, MoreHorizontal, Pencil, Trash2, RefreshCw, Chevro
 import { useStore } from '../../store'
 import { useLang } from '../../hooks/useLang'
 import type { TaskInstance, Status } from '../../types'
-import { StatusBadge, PriorityBadge, CategoryBadge } from '../common/Badge'
-import { Modal } from '../common/Modal'
-import { ConfirmDialog } from '../common/Modal'
+import { PriorityBadge, CategoryBadge } from '../common/Badge'
+import { Modal, ConfirmDialog } from '../common/Modal'
 import { TaskForm } from './TaskForm'
 import { cn } from '../../utils/cn'
 
 interface Props {
   instance: TaskInstance
+}
+
+const STATUS_LIST: Status[] = ['pending', 'in-progress', 'completed']
+
+const statusStyles: Record<Status, { badge: string; dot: string; icon: string }> = {
+  pending:       { badge: 'bg-amber-100 text-amber-700 border-amber-200',   dot: 'bg-amber-400',   icon: 'text-amber-500' },
+  'in-progress': { badge: 'bg-blue-100 text-blue-700 border-blue-200',     dot: 'bg-blue-400',    icon: 'text-blue-500' },
+  completed:     { badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-400', icon: 'text-emerald-500' },
+}
+
+const circleStyles: Record<Status, string> = {
+  pending:       'border-2 border-slate-300 hover:border-amber-400 text-transparent',
+  'in-progress': 'bg-blue-100 text-blue-600 hover:bg-blue-200',
+  completed:     'bg-emerald-500 text-white',
 }
 
 export function TaskCard({ instance }: Props) {
@@ -21,26 +34,17 @@ export function TaskCard({ instance }: Props) {
   const deleteInstance = useStore(s => s.deleteInstance)
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
 
   const category = categories.find(c => c.id === instance.categoryId)
   const isCompleted = instance.status === 'completed'
+  const style = statusStyles[instance.status]
 
-  function cycleStatus() {
-    const next: Record<Status, Status> = {
-      'pending': 'in-progress',
-      'in-progress': 'completed',
-      'completed': 'pending',
-    }
-    setStatus(instance.id, next[instance.status])
-  }
-
-  const StatusIcon = instance.status === 'completed'
-    ? Check
-    : instance.status === 'in-progress'
-    ? Clock
+  const StatusIcon = instance.status === 'completed' ? Check
+    : instance.status === 'in-progress' ? Clock
     : Circle
 
   return (
@@ -52,16 +56,13 @@ export function TaskCard({ instance }: Props) {
           : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
       )}>
         <div className="flex items-start gap-3 p-4">
-          {/* Status toggle button */}
+
+          {/* Circle status indicator (quick complete toggle) */}
           <button
-            onClick={cycleStatus}
+            onClick={() => setStatus(instance.id, isCompleted ? 'pending' : instance.status === 'pending' ? 'in-progress' : 'completed')}
             className={cn(
-              'mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors',
-              instance.status === 'completed'
-                ? 'bg-emerald-500 text-white'
-                : instance.status === 'in-progress'
-                ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                : 'border-2 border-slate-300 text-transparent hover:border-indigo-400'
+              'mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all',
+              circleStyles[instance.status]
             )}
             title={t('status')}
           >
@@ -80,7 +81,8 @@ export function TaskCard({ instance }: Props) {
                   <RefreshCw size={10} className="inline ml-1.5 text-slate-400" />
                 )}
               </p>
-              {/* Menu */}
+
+              {/* Action menu */}
               <div className="relative shrink-0">
                 <button
                   onClick={() => setMenuOpen(v => !v)}
@@ -89,10 +91,7 @@ export function TaskCard({ instance }: Props) {
                   <MoreHorizontal size={14} />
                 </button>
                 {menuOpen && (
-                  <div
-                    className="absolute right-0 top-7 z-10 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] animate-slide-in"
-                    onBlur={() => setMenuOpen(false)}
-                  >
+                  <div className="absolute right-0 top-7 z-10 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] animate-slide-in">
                     <MenuButton icon={<Pencil size={13} />} label={t('editTask')} onClick={() => { setEditOpen(true); setMenuOpen(false) }} />
                     <MenuButton icon={<Trash2 size={13} />} label={t('deleteTask')} onClick={() => { setConfirmDelete(true); setMenuOpen(false) }} danger />
                   </div>
@@ -106,7 +105,45 @@ export function TaskCard({ instance }: Props) {
 
             {/* Badges row */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              <StatusBadge status={instance.status} label={t(instance.status as any)} />
+
+              {/* ── Clickable status badge with dropdown ── */}
+              <div className="relative">
+                <button
+                  onClick={() => setStatusMenuOpen(v => !v)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors cursor-pointer hover:opacity-80',
+                    style.badge
+                  )}
+                >
+                  <span className={cn('w-1.5 h-1.5 rounded-full', style.dot)} />
+                  {t(instance.status as any)}
+                  <ChevronDown size={10} className={cn('transition-transform', statusMenuOpen && 'rotate-180')} />
+                </button>
+
+                {statusMenuOpen && (
+                  <div className="absolute left-0 top-7 z-20 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] animate-slide-in">
+                    {STATUS_LIST.map(s => {
+                      const st = statusStyles[s]
+                      const isActive = s === instance.status
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => { setStatus(instance.id, s); setStatusMenuOpen(false) }}
+                          className={cn(
+                            'w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors text-left',
+                            isActive ? 'bg-slate-50 font-semibold' : 'hover:bg-slate-50'
+                          )}
+                        >
+                          <span className={cn('w-2 h-2 rounded-full shrink-0', st.dot)} />
+                          <span className="text-slate-700">{t(s as any)}</span>
+                          {isActive && <span className="ml-auto text-slate-400">✓</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
               <PriorityBadge priority={instance.priority} label={t(instance.priority)} />
               {category && (
                 <CategoryBadge
@@ -141,15 +178,11 @@ export function TaskCard({ instance }: Props) {
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t('editTask')}>
         <TaskForm
           initial={instance}
-          onSave={data => {
-            updateInstance(instance.id, data)
-            setEditOpen(false)
-          }}
+          onSave={data => { updateInstance(instance.id, data); setEditOpen(false) }}
           onCancel={() => setEditOpen(false)}
         />
       </Modal>
 
-      {/* Confirm delete */}
       <ConfirmDialog
         open={confirmDelete}
         message={t('confirmDelete')}
@@ -160,10 +193,9 @@ export function TaskCard({ instance }: Props) {
         onCancel={() => setConfirmDelete(false)}
       />
 
-      {/* Close menu on outside click */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-[5]" onClick={() => setMenuOpen(false)} />
-      )}
+      {/* Outside click handlers */}
+      {menuOpen && <div className="fixed inset-0 z-[5]" onClick={() => setMenuOpen(false)} />}
+      {statusMenuOpen && <div className="fixed inset-0 z-[15]" onClick={() => setStatusMenuOpen(false)} />}
     </>
   )
 }
