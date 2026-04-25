@@ -52,8 +52,9 @@ export function WeekView() {
         </h1>
       </div>
 
-      {/* Week grid */}
-      <div className="grid grid-cols-7 gap-2">
+      {/* Week grid — horizontal scroll on mobile */}
+      <div className="overflow-x-auto -mx-1 px-1">
+      <div className="grid grid-cols-7 gap-2 min-w-[560px]">
         {weekDays.map(date => {
           const tasks = getTasksForDay(date)
           const completed = tasks.filter(t => t.status === 'completed').length
@@ -126,6 +127,8 @@ export function WeekView() {
           )
         })}
       </div>
+
+      </div>{/* end scroll wrapper */}
 
       <p className="text-xs text-slate-400 text-center">Click a day to view details</p>
     </div>

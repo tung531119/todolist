@@ -57,10 +57,10 @@ export function DayView() {
   const grouped   = groupByStatus(dayInstances)
 
   return (
-    <div className="flex gap-5 items-start">
+    <div className="flex flex-col md:flex-row gap-5 items-start">
 
       {/* ── Left panel: date info + filters ─────────────────────────────── */}
-      <div className="w-80 shrink-0 flex flex-col gap-4 sticky top-0">
+      <div className="w-full md:w-80 shrink-0 flex flex-col gap-4 md:sticky md:top-0">
 
         {/* Date card */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
