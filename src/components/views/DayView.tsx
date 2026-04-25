@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, CheckCircle2, Circle, ClipboardList } from 'lucide-react'
+import { Plus, CheckCircle2, Circle, ClipboardList, AlertCircle, ChevronDown } from 'lucide-react'
 import { useStore } from '../../store'
 import { useLang } from '../../hooks/useLang'
 import { formatDisplay, isToday, fromDateString } from '../../utils/date'
@@ -20,10 +20,19 @@ export function DayView() {
   const ensureInstances = useStore(s => s.ensureInstances)
 
   const [addOpen, setAddOpen] = useState(false)
+  const [notFinishedOpen, setNotFinishedOpen] = useState(true)
 
   useEffect(() => {
     ensureInstances([selectedDate])
   }, [selectedDate])
+
+  // Tasks incomplete from previous days (only on today's view)
+  const overdueInstances = useMemo(() => {
+    if (selectedDate >= new Date().toISOString().slice(0, 10) === false) return []
+    return instances.filter(
+      i => i.date < selectedDate && (i.status === 'pending' || i.status === 'in-progress')
+    ).sort((a, b) => b.date.localeCompare(a.date)) // newest-old first
+  }, [instances, selectedDate])
 
   const dayInstances = useMemo(() => {
     let list = instances.filter(i => i.date === selectedDate)
@@ -35,7 +44,6 @@ export function DayView() {
     if (ui.priorityFilter.length > 0)
       list = list.filter(i => ui.priorityFilter.includes(i.priority))
 
-    // Sort: pending → in-progress → completed, then by priority
     const statusOrder = { pending: 0, 'in-progress': 1, completed: 2 }
     const priorityOrder = { high: 0, medium: 1, low: 2 }
     return list.sort((a, b) => {
@@ -101,9 +109,51 @@ export function DayView() {
             <Stat icon={<ClipboardList size={14} />} value={total} label={t('total')} color="text-slate-600" />
             <Stat icon={<Circle size={14} />} value={instances.filter(i => i.date === selectedDate && i.status === 'pending').length} label={t('pending')} color="text-amber-500" />
             <Stat icon={<CheckCircle2 size={14} />} value={completed} label={t('completed')} color="text-emerald-500" />
+            {overdueInstances.length > 0 && todayDate && (
+              <Stat icon={<AlertCircle size={14} />} value={overdueInstances.length} label={t('notFinished')} color="text-rose-500" />
+            )}
           </div>
         )}
       </div>
+
+      {/* ── Not Finished section (only on today's view) ── */}
+      {todayDate && overdueInstances.length > 0 && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 overflow-hidden">
+          {/* Header */}
+          <button
+            onClick={() => setNotFinishedOpen(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-rose-100/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <AlertCircle size={15} className="text-rose-500" />
+              <span className="text-sm font-semibold text-rose-700">{t('notFinished')}</span>
+              <span className="bg-rose-200 text-rose-700 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {overdueInstances.length}
+              </span>
+            </div>
+            <ChevronDown
+              size={15}
+              className={cn('text-rose-400 transition-transform', notFinishedOpen && 'rotate-180')}
+            />
+          </button>
+
+          {/* Task list */}
+          {notFinishedOpen && (
+            <div className="px-4 pb-4 flex flex-col gap-2 animate-slide-in">
+              <p className="text-xs text-rose-400 mb-1">{t('notFinishedDesc')}</p>
+              {overdueInstances.map(instance => (
+                <div key={instance.id} className="relative">
+                  {/* Date label */}
+                  <span className="absolute -top-1.5 right-2 z-10 text-[10px] bg-rose-100 text-rose-400 px-1.5 py-0.5 rounded-full border border-rose-200">
+                    {formatDisplay(instance.date, lang === 'zh' ? 'M/d' : 'MMM d')}
+                  </span>
+                  <TaskCard instance={instance} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <TaskFilters />
@@ -153,7 +203,7 @@ export function DayView() {
 function TaskGroup({ label, tasks, accent }: { label: string; tasks: TaskInstance[]; accent: string }) {
   return (
     <div>
-      <div className={`flex items-center gap-2 mb-2`}>
+      <div className="flex items-center gap-2 mb-2">
         <span className={`text-xs font-semibold uppercase tracking-wide text-${accent}-600`}>{label}</span>
         <span className={`text-xs text-${accent}-400`}>{tasks.length}</span>
       </div>

@@ -25,6 +25,11 @@ const translations = {
     'in-progress': 'In Progress',
     completed: 'Completed',
 
+    // Not finished
+    notFinished: 'Not Finished',
+    notFinishedDesc: 'Incomplete tasks from previous days',
+    notFinishedEmpty: 'No overdue tasks',
+
     // Priority
     low: 'Low',
     medium: 'Medium',
@@ -146,6 +151,11 @@ const translations = {
     pending: '待處理',
     'in-progress': '進行中',
     completed: '已完成',
+
+    // Not finished
+    notFinished: '未完成',
+    notFinishedDesc: '來自前幾天尚未完成的事項',
+    notFinishedEmpty: '沒有逾期任務',
 
     low: '低',
     medium: '中',
