@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, CheckCircle2, Circle, ClipboardList, AlertCircle, ChevronDown } from 'lucide-react'
+import { Plus, CheckCircle2, Circle, ClipboardList, AlertCircle, ChevronDown, RefreshCw, Sparkles } from 'lucide-react'
 import { useStore } from '../../store'
 import { useLang } from '../../hooks/useLang'
 import { formatDisplay, isToday, fromDateString } from '../../utils/date'
@@ -21,6 +21,8 @@ export function DayView() {
 
   const [addOpen, setAddOpen] = useState(false)
   const [notFinishedOpen, setNotFinishedOpen] = useState(true)
+  const [recurringOpen, setRecurringOpen] = useState(true)
+  const [onetimeOpen, setOnetimeOpen] = useState(true)
 
   useEffect(() => {
     ensureInstances([selectedDate])
@@ -48,20 +50,21 @@ export function DayView() {
     })
   }, [instances, selectedDate, ui.categoryFilter, ui.statusFilter, ui.priorityFilter])
 
+  const recurringTasks = dayInstances.filter(i => Boolean(i.templateId))
+  const onetimeTasks   = dayInstances.filter(i => !i.templateId)
+
   const total     = instances.filter(i => i.date === selectedDate).length
   const completed = instances.filter(i => i.date === selectedDate && i.status === 'completed').length
   const progress  = total === 0 ? 0 : Math.round((completed / total) * 100)
 
   const todayDate = isToday(fromDateString(selectedDate))
   const dateLabel = formatDisplay(selectedDate, lang === 'zh' ? 'yyyy年M月d日' : 'EEEE, MMMM d')
-  const grouped   = groupByStatus(dayInstances)
 
   return (
     <div className="flex flex-col md:flex-row gap-5 items-start">
 
-      {/* ── Left panel: date info + filters ─────────────────────────────── */}
+      {/* ── Left panel ───────────────────────────────────────────────────── */}
       <div className="w-full md:w-80 shrink-0 flex flex-col gap-4 md:sticky md:top-0">
-
         {/* Date card */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <p className={cn('text-xs font-semibold uppercase tracking-widest mb-1',
@@ -70,18 +73,14 @@ export function DayView() {
           </p>
           <h1 className="text-lg font-bold text-slate-900 leading-tight">{dateLabel}</h1>
 
-          {/* Progress ring */}
           {total > 0 && (
             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100">
               <div className="relative w-14 h-14 shrink-0">
                 <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
                   <circle cx="28" cy="28" r="22" fill="none" stroke="#e2e8f0" strokeWidth="4" />
-                  <circle
-                    cx="28" cy="28" r="22"
-                    fill="none"
+                  <circle cx="28" cy="28" r="22" fill="none"
                     stroke={progress === 100 ? '#10b981' : '#6366f1'}
-                    strokeWidth="4"
-                    strokeLinecap="round"
+                    strokeWidth="4" strokeLinecap="round"
                     strokeDasharray={`${2 * Math.PI * 22}`}
                     strokeDashoffset={`${2 * Math.PI * 22 * (1 - progress / 100)}`}
                     className="transition-all duration-500"
@@ -103,7 +102,6 @@ export function DayView() {
           )}
         </div>
 
-        {/* Filters */}
         <TaskFilters />
       </div>
 
@@ -143,25 +141,51 @@ export function DayView() {
           </div>
         )}
 
-        {/* Today's tasks */}
-        {dayInstances.length === 0 ? (
+        {/* Empty state */}
+        {dayInstances.length === 0 && (
           <EmptyState
             hasFilters={ui.categoryFilter.length > 0 || ui.statusFilter.length > 0 || ui.priorityFilter.length > 0}
             onAdd={() => setAddOpen(true)}
             t={t}
           />
-        ) : (
-          <div className="flex flex-col gap-3">
-            {grouped.pending.length > 0 && (
-              <TaskGroup label={t('pending')} tasks={grouped.pending} accent="amber" />
-            )}
-            {grouped['in-progress'].length > 0 && (
-              <TaskGroup label={t('in-progress')} tasks={grouped['in-progress']} accent="blue" />
-            )}
-            {grouped.completed.length > 0 && (
-              <TaskGroup label={t('completed')} tasks={grouped.completed} accent="emerald" />
-            )}
-          </div>
+        )}
+
+        {/* ── Recurring block ── */}
+        {recurringTasks.length > 0 && (
+          <Section
+            icon={<RefreshCw size={14} />}
+            label={lang === 'zh' ? '重複任務' : 'Recurring'}
+            count={recurringTasks.length}
+            completedCount={recurringTasks.filter(t => t.status === 'completed').length}
+            open={recurringOpen}
+            onToggle={() => setRecurringOpen(v => !v)}
+            accentClass="border-indigo-200 bg-indigo-50/60"
+            headerAccent="text-indigo-700"
+            countAccent="bg-indigo-100 text-indigo-600"
+            chevronAccent="text-indigo-400"
+            progressColor="#6366f1"
+          >
+            <StatusGroups tasks={recurringTasks} t={t} />
+          </Section>
+        )}
+
+        {/* ── One-time block ── */}
+        {onetimeTasks.length > 0 && (
+          <Section
+            icon={<Sparkles size={14} />}
+            label={lang === 'zh' ? '一次性任務' : 'One-time'}
+            count={onetimeTasks.length}
+            completedCount={onetimeTasks.filter(t => t.status === 'completed').length}
+            open={onetimeOpen}
+            onToggle={() => setOnetimeOpen(v => !v)}
+            accentClass="border-slate-200 bg-slate-50/60"
+            headerAccent="text-slate-700"
+            countAccent="bg-slate-100 text-slate-600"
+            chevronAccent="text-slate-400"
+            progressColor="#94a3b8"
+          >
+            <StatusGroups tasks={onetimeTasks} t={t} />
+          </Section>
         )}
       </div>
 
@@ -185,12 +209,81 @@ export function DayView() {
   )
 }
 
+// ── Section wrapper ───────────────────────────────────────────────────────────
+interface SectionProps {
+  icon: React.ReactNode
+  label: string
+  count: number
+  completedCount: number
+  open: boolean
+  onToggle: () => void
+  accentClass: string
+  headerAccent: string
+  countAccent: string
+  chevronAccent: string
+  progressColor: string
+  children: React.ReactNode
+}
+
+function Section({ icon, label, count, completedCount, open, onToggle, accentClass, headerAccent, countAccent, chevronAccent, progressColor, children }: SectionProps) {
+  const pct = count === 0 ? 0 : Math.round((completedCount / count) * 100)
+  return (
+    <div className={cn('rounded-xl border overflow-hidden', accentClass)}>
+      {/* Section header */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-4 py-3 hover:brightness-95 transition-all"
+      >
+        <div className="flex items-center gap-2">
+          <span className={headerAccent}>{icon}</span>
+          <span className={cn('text-sm font-bold', headerAccent)}>{label}</span>
+          <span className={cn('text-xs font-bold px-1.5 py-0.5 rounded-full', countAccent)}>{count}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {/* Mini progress bar */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            <div className="w-20 h-1.5 bg-white/70 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, backgroundColor: progressColor }}
+              />
+            </div>
+            <span className="text-xs text-slate-400">{completedCount}/{count}</span>
+          </div>
+          <ChevronDown size={15} className={cn(chevronAccent, 'transition-transform', open && 'rotate-180')} />
+        </div>
+      </button>
+
+      {/* Tasks */}
+      {open && (
+        <div className="px-4 pb-4 flex flex-col gap-3 animate-slide-in">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Status sub-groups inside a section ───────────────────────────────────────
+function StatusGroups({ tasks, t }: { tasks: TaskInstance[]; t: (k: any) => string }) {
+  const pending    = tasks.filter(i => i.status === 'pending')
+  const inProgress = tasks.filter(i => i.status === 'in-progress')
+  const done       = tasks.filter(i => i.status === 'completed')
+  return (
+    <>
+      {pending.length > 0    && <TaskGroup label={t('pending')}     tasks={pending}    accent="amber" />}
+      {inProgress.length > 0 && <TaskGroup label={t('in-progress')} tasks={inProgress} accent="blue" />}
+      {done.length > 0       && <TaskGroup label={t('completed')}   tasks={done}       accent="emerald" />}
+    </>
+  )
+}
+
 function TaskGroup({ label, tasks, accent }: { label: string; tasks: TaskInstance[]; accent: string }) {
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2.5">
-        <span className={`text-sm font-bold uppercase tracking-wide text-${accent}-600`}>{label}</span>
-        <span className={`text-sm font-semibold text-${accent}-400`}>{tasks.length}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className={`text-xs font-bold uppercase tracking-wide text-${accent}-600`}>{label}</span>
+        <span className={`text-xs font-semibold text-${accent}-400`}>{tasks.length}</span>
       </div>
       <div className="flex flex-col gap-2">
         {tasks.map(t => <TaskCard key={t.id} instance={t} />)}
@@ -225,12 +318,4 @@ function EmptyState({ hasFilters, onAdd, t }: { hasFilters: boolean; onAdd: () =
       )}
     </div>
   )
-}
-
-function groupByStatus(tasks: TaskInstance[]) {
-  return {
-    pending:       tasks.filter(t => t.status === 'pending'),
-    'in-progress': tasks.filter(t => t.status === 'in-progress'),
-    completed:     tasks.filter(t => t.status === 'completed'),
-  }
 }
