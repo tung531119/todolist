@@ -33,34 +33,34 @@ export function Header({ activePage, onMenuClick }: Props) {
   const isToday = selectedDate === todayString()
 
   return (
-    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
+    <header className="h-14 bg-white border-b border-zinc-100 flex items-center justify-between px-4 md:px-6 shrink-0 gap-2">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuClick}
-        className="md:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-500 shrink-0"
+        className="md:hidden p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 shrink-0"
       >
         <Menu size={18} />
       </button>
 
       {/* Left: title / date nav */}
       {isNavPage ? (
-        <h1 className="text-sm font-semibold text-slate-900 flex-1">{t(activePage as any)}</h1>
+        <h1 className="text-sm font-semibold text-zinc-900 flex-1">{t(activePage as any)}</h1>
       ) : (
         <div className="flex items-center gap-1 md:gap-3 flex-1 min-w-0">
           <button
             onClick={() => navigate(-1)}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors shrink-0"
+            className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors shrink-0"
           >
             <ChevronLeft size={16} />
           </button>
 
-          <p className="text-sm font-semibold text-slate-900 truncate">
+          <p className="text-sm font-semibold text-zinc-900 truncate">
             {getHeaderLabel(selectedDate, mode, lang)}
           </p>
 
           <button
             onClick={() => navigate(1)}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors shrink-0"
+            className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors shrink-0"
           >
             <ChevronRight size={16} />
           </button>
@@ -68,7 +68,7 @@ export function Header({ activePage, onMenuClick }: Props) {
           {!isToday && (
             <button
               onClick={() => setSelectedDate(todayString())}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors shrink-0"
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-zinc-200 hover:bg-zinc-50 text-zinc-600 transition-colors shrink-0"
             >
               <CalendarDays size={12} />
               {t('today')}
@@ -79,7 +79,7 @@ export function Header({ activePage, onMenuClick }: Props) {
 
       {/* Right: view switcher */}
       {!isNavPage && (
-        <div className="flex items-center bg-slate-100 rounded-lg p-1 gap-0.5 shrink-0">
+        <div className="flex items-center bg-zinc-100 rounded-lg p-1 gap-0.5 shrink-0">
           {(['day', 'week', 'month'] as ViewMode[]).map(v => (
             <button
               key={v}
@@ -87,8 +87,8 @@ export function Header({ activePage, onMenuClick }: Props) {
               className={cn(
                 'px-2 md:px-3 py-1 rounded-md text-xs font-medium transition-all',
                 viewMode === v
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-white text-zinc-900 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-700'
               )}
             >
               {t(v)}

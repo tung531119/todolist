@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Circle, Clock, MoreHorizontal, Pencil, Trash2, RefreshCw, ChevronDown } from 'lucide-react'
+import { Check, Clock, MoreHorizontal, Pencil, Trash2, RefreshCw, ChevronDown } from 'lucide-react'
 import { useStore } from '../../store'
 import { useLang } from '../../hooks/useLang'
 import type { TaskInstance, Status } from '../../types'
@@ -14,16 +14,22 @@ interface Props {
 
 const STATUS_LIST: Status[] = ['pending', 'in-progress', 'completed']
 
-const statusStyles: Record<Status, { badge: string; dot: string; icon: string }> = {
-  pending:       { badge: 'bg-amber-100 text-amber-700 border-amber-200',   dot: 'bg-amber-400',   icon: 'text-amber-500' },
-  'in-progress': { badge: 'bg-blue-100 text-blue-700 border-blue-200',     dot: 'bg-blue-400',    icon: 'text-blue-500' },
-  completed:     { badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', dot: 'bg-emerald-400', icon: 'text-emerald-500' },
+const statusStyles: Record<Status, { badge: string; dot: string }> = {
+  pending:       { badge: 'bg-zinc-100 text-zinc-600 border-zinc-200',      dot: 'bg-zinc-400' },
+  'in-progress': { badge: 'bg-blue-50 text-blue-700 border-blue-100',       dot: 'bg-blue-500' },
+  completed:     { badge: 'bg-emerald-50 text-emerald-700 border-emerald-100', dot: 'bg-emerald-500' },
 }
 
 const circleStyles: Record<Status, string> = {
-  pending:       'border-2 border-slate-300 hover:border-amber-400 text-transparent',
+  pending:       'border-2 border-zinc-200 hover:border-blue-400 text-transparent',
   'in-progress': 'bg-blue-100 text-blue-600 hover:bg-blue-200',
   completed:     'bg-emerald-500 text-white',
+}
+
+const statusIcon: Record<Status, React.ReactNode> = {
+  pending:       <Check size={11} strokeWidth={2.5} className="opacity-0" />,
+  'in-progress': <Clock size={11} strokeWidth={2.5} />,
+  completed:     <Check size={11} strokeWidth={2.5} />,
 }
 
 export function TaskCard({ instance }: Props) {
@@ -46,49 +52,46 @@ export function TaskCard({ instance }: Props) {
   const isBacklog = instance.date === 'backlog'
   const style = statusStyles[instance.status]
 
-  const StatusIcon = instance.status === 'completed' ? Check
-    : instance.status === 'in-progress' ? Clock
-    : Circle
-
   return (
     <>
       <div className={cn(
         'group relative bg-white rounded-xl border transition-all duration-200 overflow-hidden',
         isCompleted
-          ? 'border-slate-100 opacity-75'
-          : isBacklog
-          ? 'border-amber-200 hover:border-amber-300 hover:shadow-sm'
-          : isRecurring
-          ? 'border-indigo-200 hover:border-indigo-300 hover:shadow-sm'
-          : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
+          ? 'border-zinc-100 opacity-60'
+          : isRecurring && !isBacklog
+          ? 'border-blue-100 hover:border-blue-200 hover:shadow-sm'
+          : 'border-zinc-100 hover:border-zinc-200 hover:shadow-sm'
       )}>
         {/* Left accent bar */}
         {isRecurring && !isBacklog && (
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-400 rounded-l-xl" />
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-400 rounded-l-xl" />
         )}
         {isBacklog && (
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-xl" />
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-300 rounded-l-xl" />
         )}
-        <div className={cn('flex items-start gap-3 p-4', isRecurring && 'pl-5')}>
+        <div className={cn('flex items-start gap-3 p-4', (isRecurring || isBacklog) && 'pl-5')}>
 
-          {/* Circle status indicator (quick complete toggle) */}
+          {/* Circle status indicator */}
           <button
-            onClick={() => setStatus(instance.id, isCompleted ? 'pending' : instance.status === 'pending' ? 'in-progress' : 'completed')}
+            onClick={() => setStatus(
+              instance.id,
+              isCompleted ? 'pending' : instance.status === 'pending' ? 'in-progress' : 'completed'
+            )}
             className={cn(
               'mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all',
               circleStyles[instance.status]
             )}
             title={t('status')}
           >
-            <StatusIcon size={12} strokeWidth={instance.status === 'pending' ? 0 : 2.5} />
+            {statusIcon[instance.status]}
           </button>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <p className={cn(
-                'text-sm font-medium text-slate-900 leading-snug',
-                isCompleted && 'line-through text-slate-400'
+                'text-sm font-medium leading-snug',
+                isCompleted ? 'line-through text-zinc-400' : 'text-zinc-800'
               )}>
                 {instance.title}
               </p>
@@ -97,16 +100,16 @@ export function TaskCard({ instance }: Props) {
               <div className="relative shrink-0">
                 <button
                   onClick={() => setMenuOpen(v => !v)}
-                  className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
+                  className="p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-all"
                 >
                   <MoreHorizontal size={14} />
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 top-7 z-10 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[160px] animate-slide-in">
+                  <div className="absolute right-0 top-7 z-10 bg-white border border-zinc-100 rounded-xl shadow-xl py-1 min-w-[160px] animate-slide-in">
                     <MenuButton icon={<Pencil size={13} />} label={t('editTask')} onClick={() => { setEditOpen(true); setMenuOpen(false) }} />
                     {isBacklog && (
-                      <div className="px-3 py-2 border-t border-slate-100">
-                        <p className="text-[10px] text-slate-400 mb-1">{t('scheduleTask')}</p>
+                      <div className="px-3 py-2 border-t border-zinc-100">
+                        <p className="text-[10px] text-zinc-400 mb-1">{t('scheduleTask')}</p>
                         <input
                           type="date"
                           value={scheduleDate}
@@ -116,7 +119,7 @@ export function TaskCard({ instance }: Props) {
                               setMenuOpen(false)
                             }
                           }}
-                          className="w-full px-2 py-1 text-xs rounded-md border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                          className="w-full px-2 py-1 text-xs rounded-md border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
                       </div>
                     )}
@@ -127,18 +130,18 @@ export function TaskCard({ instance }: Props) {
             </div>
 
             {instance.description && (
-              <p className="text-sm text-slate-500 mt-1 leading-relaxed">{instance.description}</p>
+              <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{instance.description}</p>
             )}
 
             {/* Badges row */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
 
-              {/* ── Clickable status badge with dropdown ── */}
+              {/* Clickable status badge */}
               <div className="relative">
                 <button
                   onClick={() => setStatusMenuOpen(v => !v)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border transition-colors cursor-pointer hover:opacity-80',
+                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer hover:opacity-80',
                     style.badge
                   )}
                 >
@@ -148,7 +151,7 @@ export function TaskCard({ instance }: Props) {
                 </button>
 
                 {statusMenuOpen && (
-                  <div className="absolute left-0 top-7 z-20 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] animate-slide-in">
+                  <div className="absolute left-0 top-8 z-20 bg-white border border-zinc-100 rounded-xl shadow-xl py-1 min-w-[140px] animate-slide-in">
                     {STATUS_LIST.map(s => {
                       const st = statusStyles[s]
                       const isActive = s === instance.status
@@ -158,12 +161,12 @@ export function TaskCard({ instance }: Props) {
                           onClick={() => { setStatus(instance.id, s); setStatusMenuOpen(false) }}
                           className={cn(
                             'w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors text-left',
-                            isActive ? 'bg-slate-50 font-semibold' : 'hover:bg-slate-50'
+                            isActive ? 'bg-zinc-50 font-semibold' : 'hover:bg-zinc-50'
                           )}
                         >
                           <span className={cn('w-2 h-2 rounded-full shrink-0', st.dot)} />
-                          <span className="text-slate-700">{t(s as any)}</span>
-                          {isActive && <span className="ml-auto text-slate-400">✓</span>}
+                          <span className="text-zinc-700">{t(s as any)}</span>
+                          {isActive && <span className="ml-auto text-zinc-400">✓</span>}
                         </button>
                       )
                     })}
@@ -179,7 +182,7 @@ export function TaskCard({ instance }: Props) {
                 />
               )}
               {isRecurring && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-500 border border-indigo-100">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-500 border border-blue-100">
                   <RefreshCw size={10} />
                   {t('recurrence')}
                 </span>
@@ -191,13 +194,13 @@ export function TaskCard({ instance }: Props) {
               <div className="mt-2">
                 <button
                   onClick={() => setNotesOpen(v => !v)}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
                 >
                   <ChevronDown size={12} className={cn('transition-transform', notesOpen && 'rotate-180')} />
                   Notes
                 </button>
                 {notesOpen && (
-                  <p className="mt-1 text-xs text-slate-600 bg-slate-50 rounded-lg p-2 border border-slate-100 leading-relaxed">
+                  <p className="mt-1 text-xs text-zinc-600 bg-zinc-50 rounded-lg p-2 border border-zinc-100 leading-relaxed">
                     {instance.notes}
                   </p>
                 )}
@@ -226,7 +229,6 @@ export function TaskCard({ instance }: Props) {
         onCancel={() => setConfirmDelete(false)}
       />
 
-      {/* Outside click handlers */}
       {menuOpen && <div className="fixed inset-0 z-[5]" onClick={() => setMenuOpen(false)} />}
       {statusMenuOpen && <div className="fixed inset-0 z-[15]" onClick={() => setStatusMenuOpen(false)} />}
     </>
@@ -238,8 +240,8 @@ function MenuButton({ icon, label, onClick, danger }: { icon: React.ReactNode; l
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-slate-50 transition-colors text-left',
-        danger ? 'text-red-600 hover:bg-red-50' : 'text-slate-700'
+        'w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-zinc-50 transition-colors text-left',
+        danger ? 'text-red-600 hover:bg-red-50' : 'text-zinc-700'
       )}
     >
       {icon}

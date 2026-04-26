@@ -40,7 +40,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-zinc-100">
       <Sidebar
         activePage={activePage}
         onNavigate={handleNavigate}

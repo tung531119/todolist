@@ -109,7 +109,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder={t('title') + '…'}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-transparent bg-white"
           required
         />
       </div>
@@ -123,7 +123,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
           value={description}
           onChange={e => setDescription(e.target.value)}
           rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-white"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-transparent resize-none bg-white"
         />
       </div>
 
@@ -132,7 +132,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('category')}</label>
           <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 bg-white">
             {categories.map(c => (
               <option key={c.id} value={c.id}>{c.isCustom ? c.name : t(c.name as any)}</option>
             ))}
@@ -141,7 +141,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('priority')}</label>
           <select value={priority} onChange={e => setPriority(e.target.value as Priority)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 bg-white">
             <option value="low">{t('low')}</option>
             <option value="medium">{t('medium')}</option>
             <option value="high">{t('high')}</option>
@@ -154,7 +154,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('status')}</label>
           <select value={status} onChange={e => setStatus(e.target.value as Status)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 bg-white">
             <option value="pending">{t('pending')}</option>
             <option value="in-progress">{t('in-progress')}</option>
             <option value="completed">{t('completed')}</option>
@@ -169,7 +169,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
             </button>
           ) : (
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" />
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 bg-white" />
           )}
         </div>
       </div>
@@ -187,7 +187,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
           {t('notes')} <span className="text-slate-400">({t('optional')})</span>
         </label>
         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-white" />
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-transparent resize-none bg-white" />
       </div>
 
       {/* ── Recurrence section ── */}
@@ -208,8 +208,8 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
                 recType === type
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  ? 'bg-zinc-900 text-white border-zinc-900'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
               )}>
               {t(type)}
             </button>
@@ -226,8 +226,8 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
                   className={cn(
                     'w-9 h-9 rounded-lg text-xs font-medium border transition-all',
                     daysOfWeek.includes(i)
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      ? 'bg-zinc-900 text-white border-zinc-900'
+                      : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
                   )}>
                   {t(label as any)}
                 </button>
@@ -242,7 +242,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
             <label className="block text-xs text-slate-400 mb-1">{t('dayOfMonth')}</label>
             <input type="number" min={1} max={28} value={dayOfMonth}
               onChange={e => setDayOfMonth(Number(e.target.value))}
-              className="w-24 px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" />
+              className="w-24 px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 bg-white" />
           </div>
         )}
 
@@ -251,7 +251,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
           <div className="mt-3">
             <label className="block text-xs text-slate-400 mb-1">{t('endDate')} ({t('optional')})</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" />
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-zinc-400 bg-white" />
           </div>
         )}
 
@@ -269,7 +269,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: 
           {t('cancel')}
         </button>
         <button type="submit" disabled={!title.trim()}
-          className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-50">
+          className="px-4 py-2 text-sm rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white transition-colors disabled:opacity-50">
           {t('save')}
         </button>
       </div>

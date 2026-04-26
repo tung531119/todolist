@@ -3,14 +3,14 @@ import type { Status, Priority } from '../../types'
 
 // ── Status Badge ─────────────────────────────────────────────────────────────
 const statusStyles: Record<Status, string> = {
-  pending:     'bg-amber-100 text-amber-700 border-amber-200',
-  'in-progress': 'bg-blue-100 text-blue-700 border-blue-200',
-  completed:   'bg-emerald-100 text-emerald-700 border-emerald-200',
+  pending:       'bg-zinc-100 text-zinc-600 border-zinc-200',
+  'in-progress': 'bg-blue-50 text-blue-700 border-blue-100',
+  completed:     'bg-emerald-50 text-emerald-700 border-emerald-100',
 }
 const statusDot: Record<Status, string> = {
-  pending:       'bg-amber-400',
-  'in-progress': 'bg-blue-400',
-  completed:     'bg-emerald-400',
+  pending:       'bg-zinc-400',
+  'in-progress': 'bg-blue-500',
+  completed:     'bg-emerald-500',
 }
 
 interface StatusBadgeProps { status: Status; label: string; className?: string }
@@ -28,9 +28,9 @@ export function StatusBadge({ status, label, className }: StatusBadgeProps) {
 
 // ── Priority Badge ────────────────────────────────────────────────────────────
 const priorityStyles: Record<Priority, string> = {
-  low:    'bg-slate-100 text-slate-600 border-slate-200',
-  medium: 'bg-orange-100 text-orange-700 border-orange-200',
-  high:   'bg-red-100 text-red-700 border-red-200',
+  low:    'bg-zinc-50 text-zinc-500 border-zinc-200',
+  medium: 'bg-amber-50 text-amber-700 border-amber-100',
+  high:   'bg-red-50 text-red-700 border-red-100',
 }
 
 interface PriorityBadgeProps { priority: Priority; label: string; className?: string }
@@ -47,25 +47,25 @@ export function PriorityBadge({ priority, label, className }: PriorityBadgeProps
 
 // ── Category Badge ────────────────────────────────────────────────────────────
 const colorMap: Record<string, string> = {
-  indigo:  'bg-indigo-100 text-indigo-700 border-indigo-200',
-  violet:  'bg-violet-100 text-violet-700 border-violet-200',
-  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  amber:   'bg-amber-100 text-amber-700 border-amber-200',
-  sky:     'bg-sky-100 text-sky-700 border-sky-200',
-  rose:    'bg-rose-100 text-rose-700 border-rose-200',
-  teal:    'bg-teal-100 text-teal-700 border-teal-200',
-  pink:    'bg-pink-100 text-pink-700 border-pink-200',
+  indigo:  'bg-indigo-50 text-indigo-600 border-indigo-100',
+  violet:  'bg-violet-50 text-violet-600 border-violet-100',
+  emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  amber:   'bg-amber-50 text-amber-700 border-amber-100',
+  sky:     'bg-sky-50 text-sky-700 border-sky-100',
+  rose:    'bg-rose-50 text-rose-700 border-rose-100',
+  teal:    'bg-teal-50 text-teal-700 border-teal-100',
+  pink:    'bg-pink-50 text-pink-700 border-pink-100',
 }
 export const categoryColorMap = colorMap
 export const categoryDotMap: Record<string, string> = {
-  indigo:  'bg-indigo-500',
-  violet:  'bg-violet-500',
-  emerald: 'bg-emerald-500',
-  amber:   'bg-amber-500',
-  sky:     'bg-sky-500',
-  rose:    'bg-rose-500',
-  teal:    'bg-teal-500',
-  pink:    'bg-pink-500',
+  indigo:  'bg-indigo-400',
+  violet:  'bg-violet-400',
+  emerald: 'bg-emerald-400',
+  amber:   'bg-amber-400',
+  sky:     'bg-sky-400',
+  rose:    'bg-rose-400',
+  teal:    'bg-teal-400',
+  pink:    'bg-pink-400',
 }
 
 interface CategoryBadgeProps { color: string; label: string; className?: string }
@@ -73,7 +73,7 @@ export function CategoryBadge({ color, label, className }: CategoryBadgeProps) {
   return (
     <span className={cn(
       'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border',
-      colorMap[color] ?? 'bg-slate-100 text-slate-600 border-slate-200',
+      colorMap[color] ?? 'bg-zinc-50 text-zinc-500 border-zinc-200',
       className
     )}>
       {label}
