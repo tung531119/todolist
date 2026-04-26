@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, CheckCircle2, Circle, ClipboardList, AlertCircle, ChevronDown, RefreshCw, Sparkles, Target } from 'lucide-react'
+import {
+  Plus, CheckCircle2, Circle, ClipboardList,
+  AlertCircle, ChevronDown, RefreshCw, Sparkles, Target,
+} from 'lucide-react'
 import { useStore } from '../../store'
 import { useLang } from '../../hooks/useLang'
 import { formatDisplay, isToday, fromDateString } from '../../utils/date'
@@ -14,22 +17,21 @@ import { cn } from '../../utils/cn'
 export function DayView() {
   const { t, lang } = useLang()
   const selectedDate = useStore(s => s.ui.selectedDate)
-  const instances = useStore(s => s.instances)
-  const ui = useStore(s => s.ui)
-  const addInstance = useStore(s => s.addInstance)
+  const instances    = useStore(s => s.instances)
+  const ui           = useStore(s => s.ui)
+  const addInstance  = useStore(s => s.addInstance)
   const ensureInstances = useStore(s => s.ensureInstances)
 
-  const [addOpen, setAddOpen] = useState(false)
+  const [addOpen,        setAddOpen]        = useState(false)
   const [addBacklogOpen, setAddBacklogOpen] = useState(false)
   const [notFinishedOpen, setNotFinishedOpen] = useState(true)
-  const [recurringOpen, setRecurringOpen] = useState(true)
-  const [onetimeOpen, setOnetimeOpen] = useState(true)
-  const [backlogOpen, setBacklogOpen] = useState(true)
+  const [recurringOpen,  setRecurringOpen]  = useState(true)
+  const [onetimeOpen,    setOnetimeOpen]    = useState(true)
+  const [backlogOpen,    setBacklogOpen]    = useState(true)
 
-  useEffect(() => {
-    ensureInstances([selectedDate])
-  }, [selectedDate])
+  useEffect(() => { ensureInstances([selectedDate]) }, [selectedDate])
 
+  /* ── Overdue (past unfinished) ─────────────────────────────────────── */
   const overdueInstances = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
     if (selectedDate !== today) return []
@@ -38,25 +40,26 @@ export function DayView() {
       .sort((a, b) => b.date.localeCompare(a.date))
   }, [instances, selectedDate])
 
+  /* ── Backlog (no date) ─────────────────────────────────────────────── */
   const backlogInstances = useMemo(() => {
     let list = instances.filter(i => i.date === 'backlog')
     if (ui.categoryFilter.length > 0) list = list.filter(i => ui.categoryFilter.includes(i.categoryId))
     if (ui.priorityFilter.length > 0) list = list.filter(i => ui.priorityFilter.includes(i.priority))
-    const priorityOrder = { high: 0, medium: 1, low: 2 }
-    return list.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+    const po = { high: 0, medium: 1, low: 2 }
+    return list.sort((a, b) => po[a.priority] - po[b.priority])
   }, [instances, ui.categoryFilter, ui.priorityFilter])
 
+  /* ── Today's tasks ─────────────────────────────────────────────────── */
   const dayInstances = useMemo(() => {
     let list = instances.filter(i => i.date === selectedDate)
     if (ui.categoryFilter.length > 0) list = list.filter(i => ui.categoryFilter.includes(i.categoryId))
     if (ui.statusFilter.length > 0)   list = list.filter(i => ui.statusFilter.includes(i.status))
     if (ui.priorityFilter.length > 0) list = list.filter(i => ui.priorityFilter.includes(i.priority))
-
-    const statusOrder   = { pending: 0, 'in-progress': 1, completed: 2 }
-    const priorityOrder = { high: 0, medium: 1, low: 2 }
+    const so = { pending: 0, 'in-progress': 1, completed: 2 }
+    const po = { high: 0, medium: 1, low: 2 }
     return list.sort((a, b) => {
-      const sd = statusOrder[a.status] - statusOrder[b.status]
-      return sd !== 0 ? sd : priorityOrder[a.priority] - priorityOrder[b.priority]
+      const sd = so[a.status] - so[b.status]
+      return sd !== 0 ? sd : po[a.priority] - po[b.priority]
     })
   }, [instances, selectedDate, ui.categoryFilter, ui.statusFilter, ui.priorityFilter])
 
@@ -66,15 +69,14 @@ export function DayView() {
   const total     = instances.filter(i => i.date === selectedDate).length
   const completed = instances.filter(i => i.date === selectedDate && i.status === 'completed').length
   const progress  = total === 0 ? 0 : Math.round((completed / total) * 100)
-
   const todayDate = isToday(fromDateString(selectedDate))
   const dateLabel = formatDisplay(selectedDate, lang === 'zh' ? 'yyyy年M月d日' : 'EEEE, MMMM d')
 
   return (
-    <div className="flex flex-col md:flex-row gap-5 items-start">
+    <div className="flex flex-col lg:flex-row gap-5 items-start">
 
-      {/* ── Left panel ───────────────────────────────────────────────────── */}
-      <div className="w-full md:w-80 shrink-0 flex flex-col gap-4 md:sticky md:top-0">
+      {/* ── Col 1: Date card + Filters ────────────────────────────────── */}
+      <div className="w-full lg:w-72 shrink-0 flex flex-col gap-4 lg:sticky lg:top-0">
         {/* Date card */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <p className={cn('text-xs font-semibold uppercase tracking-widest mb-1',
@@ -115,17 +117,15 @@ export function DayView() {
         <TaskFilters />
       </div>
 
-      {/* ── Right panel: tasks ───────────────────────────────────────────── */}
+      {/* ── Col 2: Main tasks ─────────────────────────────────────────── */}
       <div className="flex-1 min-w-0 flex flex-col gap-4">
         <StorageBanner />
 
         {/* Not Finished */}
         {todayDate && overdueInstances.length > 0 && (
           <div className="rounded-xl border border-rose-200 bg-rose-50 overflow-hidden">
-            <button
-              onClick={() => setNotFinishedOpen(v => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-rose-100/50 transition-colors"
-            >
+            <button onClick={() => setNotFinishedOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-rose-100/50 transition-colors">
               <div className="flex items-center gap-2">
                 <AlertCircle size={15} className="text-rose-500" />
                 <span className="text-sm font-semibold text-rose-700">{t('notFinished')}</span>
@@ -160,74 +160,84 @@ export function DayView() {
           />
         )}
 
-        {/* ── Recurring block ── */}
+        {/* Recurring */}
         {recurringTasks.length > 0 && (
           <Section
             icon={<RefreshCw size={14} />}
             label={lang === 'zh' ? '重複任務' : 'Recurring'}
             count={recurringTasks.length}
             completedCount={recurringTasks.filter(t => t.status === 'completed').length}
-            open={recurringOpen}
-            onToggle={() => setRecurringOpen(v => !v)}
+            open={recurringOpen} onToggle={() => setRecurringOpen(v => !v)}
             accentClass="border-indigo-200 bg-indigo-50/60"
-            headerAccent="text-indigo-700"
-            countAccent="bg-indigo-100 text-indigo-600"
-            chevronAccent="text-indigo-400"
-            progressColor="#6366f1"
+            headerAccent="text-indigo-700" countAccent="bg-indigo-100 text-indigo-600"
+            chevronAccent="text-indigo-400" progressColor="#6366f1"
           >
             <StatusGroups tasks={recurringTasks} t={t} />
           </Section>
         )}
 
-        {/* ── One-time block ── */}
+        {/* One-time */}
         {onetimeTasks.length > 0 && (
           <Section
             icon={<Sparkles size={14} />}
             label={lang === 'zh' ? '一次性任務' : 'One-time'}
             count={onetimeTasks.length}
             completedCount={onetimeTasks.filter(t => t.status === 'completed').length}
-            open={onetimeOpen}
-            onToggle={() => setOnetimeOpen(v => !v)}
+            open={onetimeOpen} onToggle={() => setOnetimeOpen(v => !v)}
             accentClass="border-slate-200 bg-slate-50/60"
-            headerAccent="text-slate-700"
-            countAccent="bg-slate-100 text-slate-600"
-            chevronAccent="text-slate-400"
-            progressColor="#94a3b8"
+            headerAccent="text-slate-700" countAccent="bg-slate-100 text-slate-600"
+            chevronAccent="text-slate-400" progressColor="#94a3b8"
           >
             <StatusGroups tasks={onetimeTasks} t={t} />
           </Section>
         )}
+      </div>
 
-        {/* ── Backlog / Goals block ── */}
-        <Section
-          icon={<Target size={14} />}
-          label={t('backlog')}
-          count={backlogInstances.length}
-          completedCount={backlogInstances.filter(i => i.status === 'completed').length}
-          open={backlogOpen}
-          onToggle={() => setBacklogOpen(v => !v)}
-          accentClass="border-amber-200 bg-amber-50/60"
-          headerAccent="text-amber-700"
-          countAccent="bg-amber-100 text-amber-600"
-          chevronAccent="text-amber-400"
-          progressColor="#f59e0b"
-          addButton={
-            <button
-              onClick={() => setAddBacklogOpen(true)}
-              className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors"
-            >
-              <Plus size={12} /> {t('addBacklog')}
+      {/* ── Col 3: Goals / Backlog sidebar ────────────────────────────── */}
+      <div className="w-full lg:w-72 shrink-0 lg:sticky lg:top-0">
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-amber-100">
+            <button onClick={() => setBacklogOpen(v => !v)} className="flex items-center gap-2 flex-1">
+              <Target size={14} className="text-amber-600" />
+              <span className="text-sm font-bold text-amber-700">{t('backlog')}</span>
+              <span className="bg-amber-100 text-amber-600 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                {backlogInstances.length}
+              </span>
             </button>
-          }
-        >
-          {backlogInstances.length === 0 ? (
-            <p className="text-xs text-amber-400 py-2">{t('backlogEmpty')}</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {backlogInstances.map(i => <TaskCard key={i.id} instance={i} />)}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAddBacklogOpen(true)}
+                className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-800 font-semibold transition-colors bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded-lg"
+              >
+                <Plus size={12} /> {t('addBacklog')}
+              </button>
+              <button onClick={() => setBacklogOpen(v => !v)}>
+                <ChevronDown size={15} className={cn('text-amber-400 transition-transform', backlogOpen && 'rotate-180')} />
+              </button>
+            </div>
+          </div>
+
+          {/* Backlog items */}
+          {backlogOpen && (
+            <div className="p-3 flex flex-col gap-2 animate-slide-in">
+              {backlogInstances.length === 0 ? (
+                <div className="text-center py-6">
+                  <Target size={24} className="text-amber-200 mx-auto mb-2" />
+                  <p className="text-xs text-amber-400">{t('backlogEmpty')}</p>
+                  <button
+                    onClick={() => setAddBacklogOpen(true)}
+                    className="mt-3 text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors"
+                  >
+                    + {t('addBacklog')}
+                  </button>
+                </div>
+              ) : (
+                backlogInstances.map(i => <TaskCard key={i.id} instance={i} />)
+              )}
             </div>
           )}
-        </Section>
+        </div>
       </div>
 
       {/* FAB */}
@@ -258,7 +268,7 @@ export function DayView() {
   )
 }
 
-// ── Section wrapper ───────────────────────────────────────────────────────────
+/* ── Section (collapsible block) ─────────────────────────────────────────── */
 interface SectionProps {
   icon: React.ReactNode
   label: string
@@ -272,14 +282,12 @@ interface SectionProps {
   chevronAccent: string
   progressColor: string
   children: React.ReactNode
-  addButton?: React.ReactNode
 }
 
-function Section({ icon, label, count, completedCount, open, onToggle, accentClass, headerAccent, countAccent, chevronAccent, progressColor, children, addButton }: SectionProps) {
+function Section({ icon, label, count, completedCount, open, onToggle, accentClass, headerAccent, countAccent, chevronAccent, progressColor, children }: SectionProps) {
   const pct = count === 0 ? 0 : Math.round((completedCount / count) * 100)
   return (
     <div className={cn('rounded-xl border overflow-hidden', accentClass)}>
-      {/* Section header */}
       <div className="flex items-center justify-between px-4 py-3">
         <button onClick={onToggle} className="flex items-center gap-2 flex-1 min-w-0">
           <span className={headerAccent}>{icon}</span>
@@ -287,14 +295,10 @@ function Section({ icon, label, count, completedCount, open, onToggle, accentCla
           <span className={cn('text-xs font-bold px-1.5 py-0.5 rounded-full', countAccent)}>{count}</span>
         </button>
         <div className="flex items-center gap-3 shrink-0">
-          {addButton}
-          {/* Mini progress bar */}
           <div className="hidden sm:flex items-center gap-1.5">
             <div className="w-20 h-1.5 bg-white/70 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${pct}%`, backgroundColor: progressColor }}
-              />
+              <div className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, backgroundColor: progressColor }} />
             </div>
             <span className="text-xs text-slate-400">{completedCount}/{count}</span>
           </div>
@@ -303,8 +307,6 @@ function Section({ icon, label, count, completedCount, open, onToggle, accentCla
           </button>
         </div>
       </div>
-
-      {/* Tasks */}
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-3 animate-slide-in">
           {children}
@@ -314,7 +316,7 @@ function Section({ icon, label, count, completedCount, open, onToggle, accentCla
   )
 }
 
-// ── Status sub-groups inside a section ───────────────────────────────────────
+/* ── Status sub-groups ───────────────────────────────────────────────────── */
 function StatusGroups({ tasks, t }: { tasks: TaskInstance[]; t: (k: any) => string }) {
   const pending    = tasks.filter(i => i.status === 'pending')
   const inProgress = tasks.filter(i => i.status === 'in-progress')
