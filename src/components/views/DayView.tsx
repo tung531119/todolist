@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, CheckCircle2, Circle, ClipboardList, AlertCircle, ChevronDown, RefreshCw, Sparkles } from 'lucide-react'
+import { Plus, CheckCircle2, Circle, ClipboardList, AlertCircle, ChevronDown, RefreshCw, Sparkles, Target } from 'lucide-react'
 import { useStore } from '../../store'
 import { useLang } from '../../hooks/useLang'
 import { formatDisplay, isToday, fromDateString } from '../../utils/date'
@@ -20,9 +20,11 @@ export function DayView() {
   const ensureInstances = useStore(s => s.ensureInstances)
 
   const [addOpen, setAddOpen] = useState(false)
+  const [addBacklogOpen, setAddBacklogOpen] = useState(false)
   const [notFinishedOpen, setNotFinishedOpen] = useState(true)
   const [recurringOpen, setRecurringOpen] = useState(true)
   const [onetimeOpen, setOnetimeOpen] = useState(true)
+  const [backlogOpen, setBacklogOpen] = useState(true)
 
   useEffect(() => {
     ensureInstances([selectedDate])
@@ -35,6 +37,14 @@ export function DayView() {
       .filter(i => i.date < selectedDate && (i.status === 'pending' || i.status === 'in-progress'))
       .sort((a, b) => b.date.localeCompare(a.date))
   }, [instances, selectedDate])
+
+  const backlogInstances = useMemo(() => {
+    let list = instances.filter(i => i.date === 'backlog')
+    if (ui.categoryFilter.length > 0) list = list.filter(i => ui.categoryFilter.includes(i.categoryId))
+    if (ui.priorityFilter.length > 0) list = list.filter(i => ui.priorityFilter.includes(i.priority))
+    const priorityOrder = { high: 0, medium: 1, low: 2 }
+    return list.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+  }, [instances, ui.categoryFilter, ui.priorityFilter])
 
   const dayInstances = useMemo(() => {
     let list = instances.filter(i => i.date === selectedDate)
@@ -187,6 +197,37 @@ export function DayView() {
             <StatusGroups tasks={onetimeTasks} t={t} />
           </Section>
         )}
+
+        {/* ── Backlog / Goals block ── */}
+        <Section
+          icon={<Target size={14} />}
+          label={t('backlog')}
+          count={backlogInstances.length}
+          completedCount={backlogInstances.filter(i => i.status === 'completed').length}
+          open={backlogOpen}
+          onToggle={() => setBacklogOpen(v => !v)}
+          accentClass="border-amber-200 bg-amber-50/60"
+          headerAccent="text-amber-700"
+          countAccent="bg-amber-100 text-amber-600"
+          chevronAccent="text-amber-400"
+          progressColor="#f59e0b"
+          addButton={
+            <button
+              onClick={() => setAddBacklogOpen(true)}
+              className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium transition-colors"
+            >
+              <Plus size={12} /> {t('addBacklog')}
+            </button>
+          }
+        >
+          {backlogInstances.length === 0 ? (
+            <p className="text-xs text-amber-400 py-2">{t('backlogEmpty')}</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {backlogInstances.map(i => <TaskCard key={i.id} instance={i} />)}
+            </div>
+          )}
+        </Section>
       </div>
 
       {/* FAB */}
@@ -203,6 +244,14 @@ export function DayView() {
           defaultDate={selectedDate}
           onSave={data => { addInstance(data); setAddOpen(false) }}
           onCancel={() => setAddOpen(false)}
+        />
+      </Modal>
+
+      <Modal open={addBacklogOpen} onClose={() => setAddBacklogOpen(false)} title={t('addBacklog')}>
+        <TaskForm
+          isBacklog
+          onSave={data => { addInstance(data); setAddBacklogOpen(false) }}
+          onCancel={() => setAddBacklogOpen(false)}
         />
       </Modal>
     </div>
@@ -223,23 +272,22 @@ interface SectionProps {
   chevronAccent: string
   progressColor: string
   children: React.ReactNode
+  addButton?: React.ReactNode
 }
 
-function Section({ icon, label, count, completedCount, open, onToggle, accentClass, headerAccent, countAccent, chevronAccent, progressColor, children }: SectionProps) {
+function Section({ icon, label, count, completedCount, open, onToggle, accentClass, headerAccent, countAccent, chevronAccent, progressColor, children, addButton }: SectionProps) {
   const pct = count === 0 ? 0 : Math.round((completedCount / count) * 100)
   return (
     <div className={cn('rounded-xl border overflow-hidden', accentClass)}>
       {/* Section header */}
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 hover:brightness-95 transition-all"
-      >
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-4 py-3">
+        <button onClick={onToggle} className="flex items-center gap-2 flex-1 min-w-0">
           <span className={headerAccent}>{icon}</span>
           <span className={cn('text-sm font-bold', headerAccent)}>{label}</span>
           <span className={cn('text-xs font-bold px-1.5 py-0.5 rounded-full', countAccent)}>{count}</span>
-        </div>
-        <div className="flex items-center gap-3">
+        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          {addButton}
           {/* Mini progress bar */}
           <div className="hidden sm:flex items-center gap-1.5">
             <div className="w-20 h-1.5 bg-white/70 rounded-full overflow-hidden">
@@ -250,9 +298,11 @@ function Section({ icon, label, count, completedCount, open, onToggle, accentCla
             </div>
             <span className="text-xs text-slate-400">{completedCount}/{count}</span>
           </div>
-          <ChevronDown size={15} className={cn(chevronAccent, 'transition-transform', open && 'rotate-180')} />
+          <button onClick={onToggle}>
+            <ChevronDown size={15} className={cn(chevronAccent, 'transition-transform', open && 'rotate-180')} />
+          </button>
         </div>
-      </button>
+      </div>
 
       {/* Tasks */}
       {open && (

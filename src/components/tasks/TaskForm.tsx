@@ -11,11 +11,13 @@ interface Props {
   onSave: (data: Omit<TaskInstance, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancel: () => void
   defaultDate?: string
+  /** If true, task is created as a backlog item (no date) */
+  isBacklog?: boolean
 }
 
 const DOW_LABELS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 
-export function TaskForm({ initial, onSave, onCancel, defaultDate }: Props) {
+export function TaskForm({ initial, onSave, onCancel, defaultDate, isBacklog }: Props) {
   const { t } = useLang()
   const categories = useStore(s => s.categories)
   const templates = useStore(s => s.templates)
@@ -28,7 +30,11 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate }: Props) {
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? categories[0]?.id ?? 'work')
   const [priority, setPriority] = useState<Priority>(initial?.priority ?? 'medium')
   const [status, setStatus] = useState<Status>(initial?.status ?? 'pending')
-  const [date, setDate] = useState(initial?.date ?? defaultDate ?? todayString())
+  const initialIsBacklog = isBacklog || initial?.date === 'backlog'
+  const [noDate, setNoDate] = useState(initialIsBacklog)
+  const [date, setDate] = useState(
+    (initial?.date && initial.date !== 'backlog') ? initial.date : (defaultDate ?? todayString())
+  )
   const [notes, setNotes] = useState(initial?.notes ?? '')
 
   // Recurrence — pre-fill from existing template if linked
@@ -87,7 +93,7 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate }: Props) {
       categoryId,
       priority,
       status,
-      date,
+      date: noDate ? 'backlog' : date,
       completedAt: status === 'completed' ? (initial?.completedAt ?? new Date().toISOString()) : null,
       notes: notes.trim(),
     })
@@ -156,10 +162,24 @@ export function TaskForm({ initial, onSave, onCancel, defaultDate }: Props) {
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-500 mb-1">{t('date')}</label>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" />
+          {noDate ? (
+            <button type="button" onClick={() => setNoDate(false)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-amber-200 bg-amber-50 text-amber-600 text-left hover:bg-amber-100 transition-colors">
+              {t('backlog')} ↗
+            </button>
+          ) : (
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white" />
+          )}
         </div>
       </div>
+
+      {/* No-date toggle */}
+      <label className="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" checked={noDate} onChange={e => setNoDate(e.target.checked)}
+          className="w-4 h-4 rounded accent-amber-500" />
+        <span className="text-xs text-slate-500">{t('backlogDesc')}</span>
+      </label>
 
       {/* Notes */}
       <div>

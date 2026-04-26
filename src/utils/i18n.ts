@@ -30,6 +30,13 @@ const translations = {
     notFinishedDesc: 'Incomplete tasks from previous days',
     notFinishedEmpty: 'No overdue tasks',
 
+    // Backlog
+    backlog: 'Someday / Goals',
+    backlogDesc: 'No specific date — do it when the time is right',
+    backlogEmpty: 'No goals yet. Add something you want to do someday.',
+    addBacklog: 'Add Goal',
+    scheduleTask: 'Schedule for a day',
+
     // Priority
     low: 'Low',
     medium: 'Medium',
@@ -156,6 +163,13 @@ const translations = {
     notFinished: '未完成',
     notFinishedDesc: '來自前幾天尚未完成的事項',
     notFinishedEmpty: '沒有逾期任務',
+
+    // Backlog
+    backlog: '未來目標',
+    backlogDesc: '沒有特定日期，等時機到了再做',
+    backlogEmpty: '還沒有目標，加一個想做的事吧',
+    addBacklog: '新增目標',
+    scheduleTask: '安排到某天',
 
     low: '低',
     medium: '中',

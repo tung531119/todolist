@@ -38,10 +38,12 @@ export function TaskCard({ instance }: Props) {
   const [editOpen, setEditOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
+  const [scheduleDate] = useState('')
 
   const category = categories.find(c => c.id === instance.categoryId)
   const isCompleted = instance.status === 'completed'
   const isRecurring = Boolean(instance.templateId)
+  const isBacklog = instance.date === 'backlog'
   const style = statusStyles[instance.status]
 
   const StatusIcon = instance.status === 'completed' ? Check
@@ -54,13 +56,18 @@ export function TaskCard({ instance }: Props) {
         'group relative bg-white rounded-xl border transition-all duration-200 overflow-hidden',
         isCompleted
           ? 'border-slate-100 opacity-75'
+          : isBacklog
+          ? 'border-amber-200 hover:border-amber-300 hover:shadow-sm'
           : isRecurring
           ? 'border-indigo-200 hover:border-indigo-300 hover:shadow-sm'
           : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
       )}>
-        {/* Recurring left accent bar */}
-        {isRecurring && (
+        {/* Left accent bar */}
+        {isRecurring && !isBacklog && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-400 rounded-l-xl" />
+        )}
+        {isBacklog && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 rounded-l-xl" />
         )}
         <div className={cn('flex items-start gap-3 p-4', isRecurring && 'pl-5')}>
 
@@ -95,8 +102,24 @@ export function TaskCard({ instance }: Props) {
                   <MoreHorizontal size={14} />
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 top-7 z-10 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[140px] animate-slide-in">
+                  <div className="absolute right-0 top-7 z-10 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[160px] animate-slide-in">
                     <MenuButton icon={<Pencil size={13} />} label={t('editTask')} onClick={() => { setEditOpen(true); setMenuOpen(false) }} />
+                    {isBacklog && (
+                      <div className="px-3 py-2 border-t border-slate-100">
+                        <p className="text-[10px] text-slate-400 mb-1">{t('scheduleTask')}</p>
+                        <input
+                          type="date"
+                          value={scheduleDate}
+                          onChange={e => {
+                            if (e.target.value) {
+                              updateInstance(instance.id, { date: e.target.value })
+                              setMenuOpen(false)
+                            }
+                          }}
+                          className="w-full px-2 py-1 text-xs rounded-md border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        />
+                      </div>
+                    )}
                     <MenuButton icon={<Trash2 size={13} />} label={t('deleteTask')} onClick={() => { setConfirmDelete(true); setMenuOpen(false) }} danger />
                   </div>
                 )}
