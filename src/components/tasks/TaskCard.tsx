@@ -41,6 +41,7 @@ export function TaskCard({ instance }: Props) {
 
   const category = categories.find(c => c.id === instance.categoryId)
   const isCompleted = instance.status === 'completed'
+  const isRecurring = Boolean(instance.templateId)
   const style = statusStyles[instance.status]
 
   const StatusIcon = instance.status === 'completed' ? Check
@@ -50,12 +51,18 @@ export function TaskCard({ instance }: Props) {
   return (
     <>
       <div className={cn(
-        'group relative bg-white rounded-xl border transition-all duration-200',
+        'group relative bg-white rounded-xl border transition-all duration-200 overflow-hidden',
         isCompleted
           ? 'border-slate-100 opacity-75'
+          : isRecurring
+          ? 'border-indigo-200 hover:border-indigo-300 hover:shadow-sm'
           : 'border-slate-200 hover:border-slate-300 hover:shadow-sm'
       )}>
-        <div className="flex items-start gap-3 p-4">
+        {/* Recurring left accent bar */}
+        {isRecurring && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-400 rounded-l-xl" />
+        )}
+        <div className={cn('flex items-start gap-3 p-4', isRecurring && 'pl-5')}>
 
           {/* Circle status indicator (quick complete toggle) */}
           <button
@@ -77,9 +84,6 @@ export function TaskCard({ instance }: Props) {
                 isCompleted && 'line-through text-slate-400'
               )}>
                 {instance.title}
-                {instance.templateId && (
-                  <RefreshCw size={10} className="inline ml-1.5 text-slate-400" />
-                )}
               </p>
 
               {/* Action menu */}
@@ -150,6 +154,12 @@ export function TaskCard({ instance }: Props) {
                   color={category.color}
                   label={category.isCustom ? category.name : t(category.name as any)}
                 />
+              )}
+              {isRecurring && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-500 border border-indigo-100">
+                  <RefreshCw size={10} />
+                  {t('recurrence')}
+                </span>
               )}
             </div>
 
